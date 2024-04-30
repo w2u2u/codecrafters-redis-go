@@ -21,19 +21,20 @@ func main() {
 			fmt.Println("Error accepting connection: ", err.Error())
 			os.Exit(1)
 		}
-		defer conn.Close()
 
 		go handle(conn)
 	}
 }
 
 func handle(conn net.Conn) {
+	defer conn.Close()
+
 	for {
 		buf := make([]byte, 1024)
 		n, err := conn.Read(buf)
 		if err != nil {
 			fmt.Println("Error read request from client: ", err.Error())
-			os.Exit(1)
+			break
 		}
 
 		fmt.Println("Server received message: ", string(buf[:n]))
@@ -41,7 +42,7 @@ func handle(conn net.Conn) {
 		_, err = conn.Write([]byte("+PONG\r\n"))
 		if err != nil {
 			fmt.Println("Error write response to client: ", err.Error())
-			os.Exit(1)
+			break
 		}
 	}
 }
