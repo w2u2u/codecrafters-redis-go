@@ -49,7 +49,9 @@ cmdLoop:
 				fmt.Println("Echo command requires an argument")
 				break cmdLoop
 			}
+
 			echoArg := redisCommand.Args[1]
+
 			handler.writer.WriteString(fmt.Sprintf("$%d\r\n%s\r\n", len(echoArg), echoArg))
 
 		case command.Get:
@@ -57,12 +59,15 @@ cmdLoop:
 				fmt.Println("Get command requires an argument")
 				break cmdLoop
 			}
+
 			keyArg := redisCommand.Args[1]
+
 			value, err := handler.db.Get(keyArg)
 			if err != nil {
 				handler.writer.WriteString("$-1\r\n")
 				break
 			}
+
 			handler.writer.WriteString(fmt.Sprintf("$%d\r\n%s\r\n", len(value), value))
 
 		case command.Set:
@@ -70,11 +75,22 @@ cmdLoop:
 				fmt.Println("Set command requires arguments")
 				break cmdLoop
 			}
+
 			keyArg, valueArg := redisCommand.Args[1], redisCommand.Args[2]
-			if err := handler.db.Set(keyArg, valueArg); err != nil {
-				fmt.Println("Unable to set key/value to database")
-				break
+			expArg := "0"
+
+			if len(redisCommand.Args) > 4 {
+				unit := strings.ToLower(redisCommand.Args[3])
+				expiry := redisCommand.Args[4]
+				switch unit {
+				case "ex":
+					expArg = expiry + "s"
+				case "px":
+					expArg = expiry + "ms"
+				}
 			}
+
+			handler.db.Set(keyArg, valueArg, expArg)
 			handler.writer.WriteString("+OK\r\n")
 		}
 

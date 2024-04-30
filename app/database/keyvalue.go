@@ -1,31 +1,50 @@
 package database
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
-type IDatabase interface {
-	Get(key string) (string, error)
-	Set(key string, value string) error
+type dataValue struct {
+	value      string
+	expiration time.Time
+}
+
+func (d dataValue) isExpired() bool {
+	return d.expiration != time.Time{} && time.Now().After(d.expiration)
 }
 
 type KeyValue struct {
-	data map[string]string
+	data map[string]dataValue
 }
 
 func NewKeyValue() KeyValue {
 	return KeyValue{
-		data: make(map[string]string),
+		data: make(map[string]dataValue),
 	}
 }
 
 func (db *KeyValue) Get(key string) (string, error) {
-	value, ok := db.data[key]
-	if !ok {
-		return "", errors.New("not found")
+	if data, ok := db.data[key]; ok {
+		if !data.isExpired() {
+			return data.value, nil
+		}
+		delete(db.data, key)
 	}
-	return value, nil
+
+	return "", errors.New("Key not found or expired")
 }
 
-func (db *KeyValue) Set(key string, value string) error {
-	db.data[key] = value
-	return nil
+func (db *KeyValue) Set(key string, value string, exp string) {
+	expiration := time.Time{}
+	if exp != "0" {
+		if duration, err := time.ParseDuration(exp); err == nil {
+			expiration = time.Now().Add(duration)
+		}
+	}
+
+	db.data[key] = dataValue{
+		value,
+		expiration,
+	}
 }
