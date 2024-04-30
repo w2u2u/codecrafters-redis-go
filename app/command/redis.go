@@ -10,6 +10,8 @@ import (
 const (
 	Ping = "ping"
 	Echo = "echo"
+	Get  = "get"
+	Set  = "set"
 )
 
 const (
