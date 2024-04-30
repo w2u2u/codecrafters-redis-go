@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
+	"strings"
+
+	"github.com/codecrafters-io/redis-starter-go/app/command"
 )
 
 func main() {
@@ -18,7 +22,7 @@ func main() {
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			fmt.Println("Error accepting connection: ", err.Error())
+			fmt.Println("Error accepting connection:", err.Error())
 			os.Exit(1)
 		}
 
@@ -29,20 +33,31 @@ func main() {
 func handle(conn net.Conn) {
 	defer conn.Close()
 
+	reader := bufio.NewReader(conn)
+	writer := bufio.NewWriter(conn)
+
 	for {
-		buf := make([]byte, 1024)
-		n, err := conn.Read(buf)
+		redisCommand, err := command.NewRedisCommand(reader)
 		if err != nil {
-			fmt.Println("Error read request from client: ", err.Error())
+			fmt.Println("Unable to parse redis command:", err)
 			break
 		}
 
-		fmt.Println("Server received message: ", string(buf[:n]))
+		fmt.Printf("Redis command: %v\n", redisCommand)
 
-		_, err = conn.Write([]byte("+PONG\r\n"))
-		if err != nil {
-			fmt.Println("Error write response to client: ", err.Error())
-			break
+		switch strings.ToLower(redisCommand.Args[0]) {
+		case command.Ping:
+			writer.WriteString("+PONG\r\n")
+
+		case command.Echo:
+			if len(redisCommand.Args) < 2 {
+				fmt.Println("Echo command requires an argument")
+				break
+			}
+			echoArg := redisCommand.Args[1]
+			writer.WriteString(fmt.Sprintf("$%d\r\n%s\r\n", len(echoArg), echoArg))
 		}
+
+		writer.Flush()
 	}
 }
