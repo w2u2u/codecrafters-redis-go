@@ -128,7 +128,34 @@ func (handler *Handler) Handshake() error {
 		fmt.Println("Failed to receive response from the master:", err)
 		return err
 	}
+	fmt.Println("Received response:", resp)
 
+	handler.writer.WriteString(command.NewArrays([]string{
+		"REPLCONF",
+		"listening-port",
+		handler.cfg.Port,
+	}))
+	handler.writer.Flush()
+
+	resp, err = handler.reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Failed to receive response from the master:", err)
+		return err
+	}
+	fmt.Println("Received response:", resp)
+
+	handler.writer.WriteString(command.NewArrays([]string{
+		"REPLCONF",
+		"capa",
+		"psync2",
+	}))
+	handler.writer.Flush()
+
+	resp, err = handler.reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Failed to receive response from the master:", err)
+		return err
+	}
 	fmt.Println("Received response:", resp)
 
 	return nil
