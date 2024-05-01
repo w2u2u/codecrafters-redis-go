@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/database"
 	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
@@ -11,8 +12,9 @@ import (
 func main() {
 	fmt.Println("Logs from your program will appear here!")
 
+	cfg := config.Parse()
 	keyValueDb := database.NewKeyValue()
-	redisServer := server.NewServer("6379", &keyValueDb)
+	redisServer := server.NewServer(cfg.Port, &keyValueDb)
 
 	if err := redisServer.Master(); err != nil {
 		fmt.Println("Unable to run the server:", err.Error())
