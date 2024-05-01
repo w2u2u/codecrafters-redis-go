@@ -23,6 +23,11 @@ const (
 	Arrays       = '*'
 )
 
+const (
+	ListeningPort = "listening-port"
+	GetAck        = "GETACK"
+)
+
 type RedisCommand struct {
 	Args []string
 	Size uint

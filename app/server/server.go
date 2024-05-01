@@ -2,6 +2,7 @@ package server
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -42,9 +43,8 @@ func (s *Server) TryHandshake() error {
 	writer.WriteString(command.NewArrays([]string{"PING"}))
 	writer.Flush()
 
-	_, err = reader.ReadString('\n')
-	if err != nil {
-		return err
+	if !command.IsPong(reader) {
+		return errors.New("Expected PONG from master")
 	}
 
 	writer.WriteString(command.NewArrays([]string{
@@ -54,9 +54,8 @@ func (s *Server) TryHandshake() error {
 	}))
 	writer.Flush()
 
-	_, err = reader.ReadString('\n')
-	if err != nil {
-		return err
+	if !command.IsOk(reader) {
+		return errors.New("Expected OK from master")
 	}
 
 	writer.WriteString(command.NewArrays([]string{
@@ -66,9 +65,8 @@ func (s *Server) TryHandshake() error {
 	}))
 	writer.Flush()
 
-	_, err = reader.ReadString('\n')
-	if err != nil {
-		return err
+	if !command.IsOk(reader) {
+		return errors.New("Expected OK from master")
 	}
 
 	writer.WriteString(command.NewArrays([]string{
@@ -78,11 +76,13 @@ func (s *Server) TryHandshake() error {
 	}))
 	writer.Flush()
 
+	// FULLRESYNC
 	_, err = reader.ReadString('\n')
 	if err != nil {
 		return err
 	}
 
+	// RDB file
 	_, err = reader.ReadString('\n')
 	if err != nil {
 		return err
@@ -196,13 +196,23 @@ cmdLoop:
 				break cmdLoop
 			}
 
-			if redisCmd.Args[1] == "listening-port" {
-				fmt.Println("Add a slave:", conn)
-				// handler.cfg.AddSlave(handler.conn)
-				s.slaves = append(s.slaves, conn)
-			}
+			switch redisCmd.Args[1] {
 
-			writer.WriteString(command.NewSimpleString("OK"))
+			case command.ListeningPort:
+				fmt.Println("Add a slave:", conn)
+				s.slaves = append(s.slaves, conn)
+				writer.WriteString(command.NewSimpleString("OK"))
+
+			case command.GetAck:
+				writer.WriteString(command.NewArrays([]string{
+					"REPLCONF",
+					"ACK",
+					"0",
+				}))
+
+			default:
+				writer.WriteString(command.NewSimpleString("OK"))
+			}
 
 		case command.Psync:
 			if len(redisCmd.Args) < 3 {
