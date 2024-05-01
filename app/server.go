@@ -16,7 +16,12 @@ func main() {
 	keyValueDb := database.NewKeyValue()
 	redisServer := server.NewServer(cfg, &keyValueDb)
 
-	if err := redisServer.Master(); err != nil {
+	if err := redisServer.TryHandshake(); err != nil {
+		fmt.Println("Unable to handshake the master:", err.Error())
+		os.Exit(1)
+	}
+
+	if err := redisServer.Serve(); err != nil {
 		fmt.Println("Unable to run the server:", err.Error())
 		os.Exit(1)
 	}

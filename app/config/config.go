@@ -1,6 +1,9 @@
 package config
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
 type Config struct {
 	Port      string
@@ -19,7 +22,7 @@ func Parse() Config {
 
 		if arg == "--replicaof" && len(argsWithoutProg) > i {
 			cfg.Role = "slave"
-			cfg.ReplicaOf = argsWithoutProg[i+1]
+			cfg.ReplicaOf = fmt.Sprintf("%s:%s", argsWithoutProg[i+1], argsWithoutProg[i+2])
 		}
 	}
 

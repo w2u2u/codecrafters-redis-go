@@ -118,3 +118,18 @@ cmdLoop:
 		handler.writer.Flush()
 	}
 }
+
+func (handler *Handler) Handshake() error {
+	handler.writer.WriteString(command.NewArrays([]string{"PING"}))
+	handler.writer.Flush()
+
+	resp, err := handler.reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Failed to receive response from the master:", err)
+		return err
+	}
+
+	fmt.Println("Received response:", resp)
+
+	return nil
+}
