@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bufio"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"strings"
@@ -130,6 +131,14 @@ cmdLoop:
 
 			resp := fmt.Sprintf("FULLRESYNC %s 0", handler.cfg.MasterReplid)
 			handler.writer.WriteString(command.NewSimpleString(resp))
+
+			data, err := hex.DecodeString("524544495330303131fa0972656469732d76657205372e322e30fa0a72656469732d62697473c040fa056374696d65c26d08bc65fa08757365642d6d656dc2b0c41000fa08616f662d62617365c000fff06e3bfec0ff5aa2")
+			if err != nil {
+				fmt.Println("Unable to decode hex to bytes:", err)
+				break cmdLoop
+			}
+			resp = fmt.Sprintf("$%d\r\n%s", len(data), data)
+			handler.writer.WriteString(resp)
 		}
 
 		handler.writer.Flush()
