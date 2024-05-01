@@ -113,6 +113,14 @@ cmdLoop:
 				}
 				handler.writer.WriteString(command.NewBulkString(strings.Join(info, "\n")))
 			}
+
+		case command.Replconf:
+			if len(redisCmd.Args) < 3 {
+				fmt.Println("Replconf command requires arguments")
+				break cmdLoop
+			}
+
+			handler.writer.WriteString(command.NewSimpleString("OK"))
 		}
 
 		handler.writer.Flush()
@@ -123,12 +131,10 @@ func (handler *Handler) Handshake() error {
 	handler.writer.WriteString(command.NewArrays([]string{"PING"}))
 	handler.writer.Flush()
 
-	resp, err := handler.reader.ReadString('\n')
+	_, err := handler.reader.ReadString('\n')
 	if err != nil {
-		fmt.Println("Failed to receive response from the master:", err)
 		return err
 	}
-	fmt.Println("Received response:", resp)
 
 	handler.writer.WriteString(command.NewArrays([]string{
 		"REPLCONF",
@@ -137,12 +143,10 @@ func (handler *Handler) Handshake() error {
 	}))
 	handler.writer.Flush()
 
-	resp, err = handler.reader.ReadString('\n')
+	_, err = handler.reader.ReadString('\n')
 	if err != nil {
-		fmt.Println("Failed to receive response from the master:", err)
 		return err
 	}
-	fmt.Println("Received response:", resp)
 
 	handler.writer.WriteString(command.NewArrays([]string{
 		"REPLCONF",
@@ -151,12 +155,10 @@ func (handler *Handler) Handshake() error {
 	}))
 	handler.writer.Flush()
 
-	resp, err = handler.reader.ReadString('\n')
+	_, err = handler.reader.ReadString('\n')
 	if err != nil {
-		fmt.Println("Failed to receive response from the master:", err)
 		return err
 	}
-	fmt.Println("Received response:", resp)
 
 	handler.writer.WriteString(command.NewArrays([]string{
 		"PSYNC",
@@ -165,12 +167,10 @@ func (handler *Handler) Handshake() error {
 	}))
 	handler.writer.Flush()
 
-	resp, err = handler.reader.ReadString('\n')
+	_, err = handler.reader.ReadString('\n')
 	if err != nil {
-		fmt.Println("Failed to receive response from the master:", err)
 		return err
 	}
-	fmt.Println("Received response:", resp)
 
 	return nil
 }
