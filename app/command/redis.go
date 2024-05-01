@@ -14,6 +14,7 @@ const (
 	Set      = "set"
 	Info     = "info"
 	Replconf = "replconf"
+	Psync    = "psync"
 )
 
 const (

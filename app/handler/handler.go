@@ -108,7 +108,7 @@ cmdLoop:
 				info := []string{
 					fmt.Sprintf("role:%s", handler.cfg.Role),
 					"connected_slaves:0",
-					"master_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",
+					fmt.Sprintf("master_replid:%s", handler.cfg.MasterReplid),
 					"master_repl_offset:0",
 				}
 				handler.writer.WriteString(command.NewBulkString(strings.Join(info, "\n")))
@@ -121,6 +121,15 @@ cmdLoop:
 			}
 
 			handler.writer.WriteString(command.NewSimpleString("OK"))
+
+		case command.Psync:
+			if len(redisCmd.Args) < 3 {
+				fmt.Println("Psync command requires arguments")
+				break cmdLoop
+			}
+
+			resp := fmt.Sprintf("FULLRESYNC %s 0", handler.cfg.MasterReplid)
+			handler.writer.WriteString(command.NewSimpleString(resp))
 		}
 
 		handler.writer.Flush()

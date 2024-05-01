@@ -6,13 +6,18 @@ import (
 )
 
 type Config struct {
-	Port      string
-	ReplicaOf string
-	Role      string
+	Port         string
+	ReplicaOf    string
+	Role         string
+	MasterReplid string
 }
 
 func Parse() Config {
-	cfg := Config{Port: "6379", Role: "master"}
+	cfg := Config{
+		Port:         "6379",
+		Role:         "master",
+		MasterReplid: "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",
+	}
 	argsWithoutProg := os.Args[1:]
 
 	for i, arg := range argsWithoutProg {
