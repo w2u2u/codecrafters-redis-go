@@ -31,57 +31,57 @@ func (handler *Handler) Handle() {
 
 cmdLoop:
 	for {
-		redisCommand, err := command.NewRedisCommand(handler.reader)
+		redisCmd, err := command.NewRedisCommand(handler.reader)
 		if err != nil {
 			fmt.Println("Unable to parse redis command:", err)
 			break
 		}
 
-		fmt.Printf("Redis command: %v\n", redisCommand)
+		fmt.Printf("Redis command: %v\n", redisCmd)
 
-		switch strings.ToLower(redisCommand.Args[0]) {
+		switch strings.ToLower(redisCmd.Args[0]) {
 
 		case command.Ping:
-			handler.writer.WriteString("+PONG\r\n")
+			handler.writer.WriteString(command.NewSimpleString("PONG"))
 
 		case command.Echo:
-			if len(redisCommand.Args) < 2 {
+			if len(redisCmd.Args) < 2 {
 				fmt.Println("Echo command requires an argument")
 				break cmdLoop
 			}
 
-			echoArg := redisCommand.Args[1]
+			echoArg := redisCmd.Args[1]
 
-			handler.writer.WriteString(fmt.Sprintf("$%d\r\n%s\r\n", len(echoArg), echoArg))
+			handler.writer.WriteString(command.NewBulkString(echoArg))
 
 		case command.Get:
-			if len(redisCommand.Args) < 2 {
+			if len(redisCmd.Args) < 2 {
 				fmt.Println("Get command requires an argument")
 				break cmdLoop
 			}
 
-			keyArg := redisCommand.Args[1]
+			keyArg := redisCmd.Args[1]
 
 			value, err := handler.db.Get(keyArg)
 			if err != nil {
-				handler.writer.WriteString("$-1\r\n")
+				handler.writer.WriteString(command.NewNulls())
 				break
 			}
 
-			handler.writer.WriteString(fmt.Sprintf("$%d\r\n%s\r\n", len(value), value))
+			handler.writer.WriteString(command.NewBulkString(value))
 
 		case command.Set:
-			if len(redisCommand.Args) < 3 {
+			if len(redisCmd.Args) < 3 {
 				fmt.Println("Set command requires arguments")
 				break cmdLoop
 			}
 
-			keyArg, valueArg := redisCommand.Args[1], redisCommand.Args[2]
+			keyArg, valueArg := redisCmd.Args[1], redisCmd.Args[2]
 			expArg := "0"
 
-			if len(redisCommand.Args) > 4 {
-				unit := strings.ToLower(redisCommand.Args[3])
-				expiry := redisCommand.Args[4]
+			if len(redisCmd.Args) > 4 {
+				unit := strings.ToLower(redisCmd.Args[3])
+				expiry := redisCmd.Args[4]
 				switch unit {
 				case "ex":
 					expArg = expiry + "s"
@@ -91,7 +91,24 @@ cmdLoop:
 			}
 
 			handler.db.Set(keyArg, valueArg, expArg)
-			handler.writer.WriteString("+OK\r\n")
+			handler.writer.WriteString(command.NewSimpleString("OK"))
+
+		case command.Info:
+			if len(redisCmd.Args) < 2 {
+				fmt.Println("Info command requires arguments")
+				break cmdLoop
+			}
+
+			sectionArg := redisCmd.Args[1]
+
+			if sectionArg == "replication" {
+				info := []string{
+					"role:master",
+					"connected_slaves:0",
+					"master_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",
+				}
+				handler.writer.WriteString(command.NewBulkString(strings.Join(info, "\n")))
+			}
 		}
 
 		handler.writer.Flush()
