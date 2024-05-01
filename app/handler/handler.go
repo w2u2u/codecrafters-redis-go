@@ -158,5 +158,19 @@ func (handler *Handler) Handshake() error {
 	}
 	fmt.Println("Received response:", resp)
 
+	handler.writer.WriteString(command.NewArrays([]string{
+		"PSYNC",
+		"?",
+		"-1",
+	}))
+	handler.writer.Flush()
+
+	resp, err = handler.reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Failed to receive response from the master:", err)
+		return err
+	}
+	fmt.Println("Received response:", resp)
+
 	return nil
 }
