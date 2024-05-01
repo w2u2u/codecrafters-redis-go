@@ -83,6 +83,13 @@ func (s *Server) TryHandshake() error {
 		return err
 	}
 
+	_, err = reader.ReadString('\n')
+	if err != nil {
+		return err
+	}
+
+	go s.HandleConnection(conn)
+
 	return nil
 }
 
@@ -93,12 +100,9 @@ func (s *Server) Listen() (net.Listener, error) {
 func (s *Server) HandleConnection(conn net.Conn) {
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
-	// defer handler.conn.Close()
 
 cmdLoop:
 	for {
-		fmt.Println("Slaves:", s.slaves)
-
 		redisCmd, err := command.NewRedisCommand(reader)
 		if err != nil {
 			fmt.Println("Unable to parse redis command:", err)
@@ -160,8 +164,6 @@ cmdLoop:
 
 			s.db.Set(keyArg, valueArg, expArg)
 			writer.WriteString(command.NewSimpleString("OK"))
-
-			fmt.Println("Slaves:", s.slaves)
 
 			for _, conn := range s.slaves {
 				fmt.Println("Try to propragate to slaves...")
