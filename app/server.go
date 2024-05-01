@@ -14,7 +14,7 @@ func main() {
 
 	cfg := config.Parse()
 	keyValueDb := database.NewKeyValue()
-	redisServer := server.NewServer(cfg.Port, &keyValueDb)
+	redisServer := server.NewServer(cfg, &keyValueDb)
 
 	if err := redisServer.Master(); err != nil {
 		fmt.Println("Unable to run the server:", err.Error())

@@ -7,20 +7,23 @@ import (
 	"strings"
 
 	"github.com/codecrafters-io/redis-starter-go/app/command"
+	"github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/database"
 )
 
 type Handler struct {
 	db     database.IDatabase
 	conn   net.Conn
+	cfg    config.Config
 	reader *bufio.Reader
 	writer *bufio.Writer
 }
 
-func NewHandler(conn net.Conn, db database.IDatabase) Handler {
+func NewHandler(conn net.Conn, db database.IDatabase, cfg config.Config) Handler {
 	return Handler{
 		db:     db,
 		conn:   conn,
+		cfg:    cfg,
 		reader: bufio.NewReader(conn),
 		writer: bufio.NewWriter(conn),
 	}
@@ -103,7 +106,7 @@ cmdLoop:
 
 			if sectionArg == "replication" {
 				info := []string{
-					"role:master",
+					fmt.Sprintf("role:%s", handler.cfg.Role),
 					"connected_slaves:0",
 					"master_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",
 				}

@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/codecrafters-io/redis-starter-go/app/config"
 	"github.com/codecrafters-io/redis-starter-go/app/database"
 	"github.com/codecrafters-io/redis-starter-go/app/handler"
 )
 
 type Server struct {
-	port string
-	db   database.IDatabase
+	cfg config.Config
+	db  database.IDatabase
 }
 
-func NewServer(port string, db database.IDatabase) Server {
-	return Server{port, db}
+func NewServer(cfg config.Config, db database.IDatabase) Server {
+	return Server{cfg, db}
 }
 
 func (Server) Slave() error {
@@ -22,9 +23,9 @@ func (Server) Slave() error {
 }
 
 func (s *Server) Master() error {
-	l, err := net.Listen("tcp", "0.0.0.0:"+s.port)
+	l, err := net.Listen("tcp", "0.0.0.0:"+s.cfg.Port)
 	if err != nil {
-		fmt.Println("Failed to bind to port", s.port)
+		fmt.Println("Failed to bind to port", s.cfg.Port)
 		return err
 	}
 
@@ -35,7 +36,7 @@ func (s *Server) Master() error {
 			return err
 		}
 
-		connection := handler.NewHandler(conn, s.db)
+		connection := handler.NewHandler(conn, s.db, s.cfg)
 
 		go connection.Handle()
 	}
