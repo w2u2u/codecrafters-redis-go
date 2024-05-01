@@ -21,8 +21,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := redisServer.Serve(); err != nil {
+	l, err := redisServer.Listen()
+	if err != nil {
 		fmt.Println("Unable to run the server:", err.Error())
 		os.Exit(1)
+	}
+
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection:", err.Error())
+			continue
+		}
+
+		go redisServer.HandleConnection(conn)
 	}
 }

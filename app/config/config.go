@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 )
 
@@ -10,6 +11,7 @@ type Config struct {
 	ReplicaOf    string
 	Role         string
 	MasterReplid string
+	Slaves       []net.Conn
 }
 
 func Parse() Config {
@@ -32,4 +34,8 @@ func Parse() Config {
 	}
 
 	return cfg
+}
+
+func (cfg *Config) AddSlave(conn net.Conn) {
+	cfg.Slaves = append(cfg.Slaves, conn)
 }

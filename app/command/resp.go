@@ -23,3 +23,7 @@ func NewArrays(msgs []string) string {
 func NewNulls() string {
 	return "$-1\r\n"
 }
+
+func NewRawBytes(bytes []byte) string {
+	return fmt.Sprintf("$%d\r\n%s", len(bytes), bytes)
+}
