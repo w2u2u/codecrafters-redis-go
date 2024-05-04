@@ -199,7 +199,6 @@ cmdLoop:
 			switch redisCmd.Args[1] {
 
 			case command.ListeningPort:
-				fmt.Println("Add a slave:", conn)
 				s.slaves = append(s.slaves, conn)
 				writer.WriteString(command.NewSimpleString("OK"))
 
